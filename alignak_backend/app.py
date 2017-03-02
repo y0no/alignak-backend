@@ -337,14 +337,15 @@ def after_insert_logcheckresult(items):
         post_internal("history", data, True)
 
 
-def pre_submit_action_right(request, lookup):
+def pre_submit_action_right(actrequest, lookup):
     """
     Deny if want write action* endpoint if property can_submit_commands is false in user account
 
-    :param request:
+    :param actrequest:
     :param lookup:
     :return:
     """
+    # pylint: disable=unused-argument
     if not g.get('can_submit_commands', False):
         abort(403)
 
