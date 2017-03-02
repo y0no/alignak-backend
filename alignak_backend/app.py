@@ -97,6 +97,7 @@ class MyTokenAuth(TokenAuth):
                 self.parent_realms[realm['_id']] = realm['_tree_parents']
 
             g.back_role_super_admin = user['back_role_super_admin']
+            g.can_submit_commands = user['can_submit_commands']
             userrestrictroles = current_app.data.driver.db['userrestrictrole']
             userrestrictrole = userrestrictroles.find({'user': user['_id']})
             g.resources_get = {}
@@ -334,6 +335,18 @@ def after_insert_logcheckresult(items):
             'logcheckresult': item['_id']
         }
         post_internal("history", data, True)
+
+
+def pre_submit_action_right(request, lookup):
+    """
+    Deny if want write action* endpoint if property can_submit_commands is false in user account
+
+    :param request:
+    :param lookup:
+    :return:
+    """
+    if not g.get('can_submit_commands', False):
+        abort(403)
 
 
 # Actions acknowledge
@@ -1528,6 +1541,16 @@ app.on_update_hostgroup += pre_hostgroup_patch
 app.on_update_servicegroup += pre_servicegroup_patch
 app.on_insert_graphite += pre_timeseries_post
 app.on_insert_influxdb += pre_timeseries_post
+# check right on submit actions
+app.on_pre_POST_actionacknowledge += pre_submit_action_right
+app.on_pre_POST_actiondowntime += pre_submit_action_right
+app.on_pre_POST_actionforcecheck += pre_submit_action_right
+app.on_pre_PATCH_actionacknowledge += pre_submit_action_right
+app.on_pre_PATCH_actiondowntime += pre_submit_action_right
+app.on_pre_PATCH_actionforcecheck += pre_submit_action_right
+app.on_pre_DELETE_actionacknowledge += pre_submit_action_right
+app.on_pre_DELETE_actiondowntime += pre_submit_action_right
+app.on_pre_DELETE_actionforcecheck += pre_submit_action_right
 
 # docs api
 Bootstrap(app)
